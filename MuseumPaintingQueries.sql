@@ -107,7 +107,29 @@ and day = 'Monday') );
 
 
 -- 11. How many museums are open every single day?
+
+select museum_id, count(day) as Open_days
+ from museum_hours
+ group by museum_id
+ having Open_days = 7;
+ 
+ 
+ 
+ 
 -- 12. Which are the top 5 most popular museum? (Popularity is defined based on most no of paintings in a museum)
+select m.name as Museum_name, m.city as City, m.country as Country, x.no_of_paintings
+from (
+select m.museum_id, count(1) as no_of_paintings,
+rank() over (order by count(1) desc) as rnk
+from work w
+join museum m 
+on m.museum_id = w.museum_id
+group by m.museum_id) x 
+join museum m 
+on m.museum_id = x.museum_id
+where x.rnk <= 5;
+
+
 -- 13. Who are the top 5 most popular artist? (Popularity is defined based on most no of paintings done by an artist)
 -- 14. Display the 3 least popular canva sizes
 -- 15. Which museum is open for the longest during a day. Dispay museum name, state and hours open and which day?
