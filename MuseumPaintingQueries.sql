@@ -131,9 +131,46 @@ where x.rnk <= 5;
 
 
 -- 13. Who are the top 5 most popular artist? (Popularity is defined based on most no of paintings done by an artist)
--- 14. Display the 3 least popular canva sizes
+
+
+
+
+select * from 
+(select a.full_name as Artist_name, count(w.work_id) as `Number of Paintings`, 
+row_number() over (order by count(w.work_id) desc) as Ranking
+from work w 
+join artist a 
+on a.artist_id = w.artist_id
+group by 1)x
+where x.Ranking <=5;
+
+-- 14. Display the 3 least popular canva sizes.
+
+
+select * from (
+select c.label as Canvas, count(w.work_id) as `Number of Paintings`, 
+dense_rank() over (order by count(w.work_id) asc) as Ranking
+from canvas_size c 
+join product_size ps on ps.size_id = c.size_id
+join work w on w.work_id = ps.work_id
+group by 1)x
+where  x.Ranking <= 3;
+
+
+
 -- 15. Which museum is open for the longest during a day. Dispay museum name, state and hours open and which day?
+select * from museum;
+select * from museum_hours;
+
+select * from 
+(select m.name as `Museum Name`, time_format(timediff(mh.open, mh.close),'%H:%i') as Open_time
+from museum_hours mh 
+join museum m 
+on m.museum_id = mh.museum_id)x
+order by Open_time desc
+limit 1  ;
 -- 16. Which museum has the most no of most popular painting style?
+
 -- 17. Identify the artists whose paintings are displayed in multiple countries
 -- 18. Display the country and the city with most no of museums. Output 2 seperate columns to mention the city and country. If there are multiple value, seperate them with comma.
 -- 19. Identify the artist and the museum where the most expensive and least expensive painting is placed. Display the artist name, sale_price, painting name, museum name, museum city and canvas label
