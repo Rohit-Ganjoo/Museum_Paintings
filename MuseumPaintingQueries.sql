@@ -159,20 +159,59 @@ where  x.Ranking <= 3;
 
 
 -- 15. Which museum is open for the longest during a day. Dispay museum name, state and hours open and which day?
-select * from museum;
-select * from museum_hours;
 
-select * from 
-(select m.name as `Museum Name`, time_format(timediff(mh.open, mh.close),'%H:%i') as Open_time
+select distinct * from 
+(select m.name as `Museum Name`, time_format(timediff(mh.open, mh.close),'%H:%i') as Open_time,m.city,m.state
 from museum_hours mh 
 join museum m 
 on m.museum_id = mh.museum_id)x
 order by Open_time desc
-limit 1  ;
+limit 5  ;
+
+
 -- 16. Which museum has the most no of most popular painting style?
 
+with pop_style as 
+			(select style
+			,rank() over(order by count(1) desc) as rnk
+			from work
+			group by style),
+		cte as
+			(select w.museum_id,m.name as museum_name,ps.style, count(1) as no_of_paintings
+			,rank() over(order by count(1) desc) as rnk
+			from work w
+			join museum m on m.museum_id=w.museum_id
+			join pop_style ps on ps.style = w.style
+			where w.museum_id is not null
+			and ps.rnk=1
+			group by w.museum_id, m.name,ps.style)
+	select museum_name,style,no_of_paintings
+	from cte 
+	where rnk=1;
+
+
+
+
+
+
 -- 17. Identify the artists whose paintings are displayed in multiple countries
+
+with paint as
+	(select distinct a.full_name as Artist_Name, w.name as painting, m.name as Museum,
+	m.country 
+	from work w
+	join artist a on a.artist_id=w.artist_id
+	join museum m on m.museum_id=w.museum_id)
+select Artist_Name, count(1) as `Number of countries`
+from paint
+group by 1
+order by 2 desc;
+
 -- 18. Display the country and the city with most no of museums. Output 2 seperate columns to mention the city and country. If there are multiple value, seperate them with comma.
+	
+    
+    
+    
 -- 19. Identify the artist and the museum where the most expensive and least expensive painting is placed. Display the artist name, sale_price, painting name, museum name, museum city and canvas label
 -- 20. Which country has the 5th highest no of paintings?
 -- 21. Which are the 3 most popular and 3 least popular painting styles?
