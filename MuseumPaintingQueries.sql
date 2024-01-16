@@ -209,10 +209,68 @@ order by 2 desc;
 
 -- 18. Display the country and the city with most no of museums. Output 2 seperate columns to mention the city and country. If there are multiple value, seperate them with comma.
 	
+    select country,city, count(name) as `Number of Museums` from museum
+    Group by country,city
+    order by 3 desc;
     
     
+    
+WITH cte_country AS (
+    SELECT country, COUNT(1) AS count_country,
+           RANK() OVER (ORDER BY COUNT(1) DESC) AS rnk
+    FROM museum
+    GROUP BY country
+),
+cte_city AS (
+    SELECT city, COUNT(1) AS count_city,
+           RANK() OVER (ORDER BY COUNT(1) DESC) AS rnk
+    FROM museum
+    GROUP BY city
+),
+filtered_countries AS (
+    SELECT DISTINCT country
+    FROM cte_country
+    WHERE rnk = 1
+),
+filtered_cities AS (
+    SELECT DISTINCT city
+    FROM cte_city
+    WHERE rnk = 1
+)
+SELECT group_concat(country) AS top_countries,
+       group_concat(city) AS top_cities
+FROM filtered_countries
+CROSS JOIN filtered_cities;
     
 -- 19. Identify the artist and the museum where the most expensive and least expensive painting is placed. Display the artist name, sale_price, painting name, museum name, museum city and canvas label
+WITH Ranking AS (
+    SELECT
+        sale_price,
+        size_id, 
+        work_id,
+        RANK() OVER (ORDER BY sale_price DESC) AS rnk_desc,
+        RANK() OVER (ORDER BY sale_price ASC) AS rnk_asc
+    FROM product_size
+)
+SELECT
+    a.full_name AS `Artist Name`,
+    w.name AS `Painting Name`,
+    R.sale_price AS `Painting Price`,
+    m.name AS `Museum Name`,
+    m.city AS `Museum City`,
+    cs.label AS `Canvas Dimension`
+FROM Ranking R
+JOIN work w ON w.work_id = R.work_id
+JOIN museum m ON m.museum_id = w.museum_id
+JOIN canvas_size cs ON cs.size_id = R.size_id
+JOIN artist a ON a.artist_id = w.artist_id
+WHERE rnk_desc = 1 OR rnk_asc = 1;
+
+
 -- 20. Which country has the 5th highest no of paintings?
+
+
+
+
 -- 21. Which are the 3 most popular and 3 least popular painting styles?
 -- 22. Which artist has the most no of Portraits paintings outside USA?. Display artist name, no of paintings and the artist nationality
