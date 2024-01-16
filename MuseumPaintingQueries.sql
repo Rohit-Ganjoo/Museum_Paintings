@@ -268,9 +268,60 @@ WHERE rnk_desc = 1 OR rnk_asc = 1;
 
 
 -- 20. Which country has the 5th highest no of paintings?
+select * from work;
+select * from museum;
 
 
+with highest as 
+(select m.country as `Country`,count(w.work_id) as `Number of Paintings`,row_number() over (order by count(w.work_id) desc) as Rnk
+from work  w 
+join museum m 
+on m.museum_id = w.museum_id
+group by 1)
+select *
+from highest
+where Rnk = 5;
 
 
 -- 21. Which are the 3 most popular and 3 least popular painting styles?
+with cte as 
+(select style, count(work_id) as cnt
+		, rank() over(order by count(work_id) desc) rnk
+		, count(1) over() as no_of_records
+		from work
+		where style is not null
+		group by style)
+
+select style,
+case 
+	when Rnk <= 3 then 'Most Popular'
+    else 'Least Popular'
+end as remarks
+from cte 
+where Rnk <=3
+or Rnk > no_of_records - 3;
+
+
+
+
+
+
+
 -- 22. Which artist has the most no of Portraits paintings outside USA?. Display artist name, no of paintings and the artist nationality
+
+select `Artist Name`,`Nationality`,`Number of Painitings`
+from 
+(select a.full_name as `Artist Name`,
+		a.nationality as `Nationality`,
+		count(w.work_id) as `Number of Painitings`,
+        rank() over ( order by count(w.work_id) desc) as Rnk
+        from work w 
+        join artist a on a.artist_id = w.artist_id
+        join subject s on s.work_id = w.work_id
+        join museum m on m.museum_id = w.museum_id
+        where s.subject = 'Portraits'
+        and m.country != 'USA'
+        group by 1,2) X
+where x.rnk <=10 ;
+        
+
